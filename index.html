@@ -293,29 +293,28 @@
 
   /* ---------- Filters bar ---------- */
   .filters{
-    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
-    border-radius:12px;padding:14px 16px;margin-bottom:22px;
+    background:var(--paper);border-radius:14px;padding:14px 16px;margin-bottom:18px;box-shadow:var(--shadow);
     display:flex;flex-wrap:wrap;gap:12px;align-items:center;
   }
   .filters input[type=search]{
-    flex:1;min-width:200px;font-family:var(--font-body);font-size:12.5px;color:#F0F2F4;
-    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);
-    border-radius:7px;padding:8px 10px;
+    flex:1;min-width:200px;font-family:var(--font-body);font-size:12.5px;color:var(--ink-text);
+    background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 11px;
   }
-  .filters input::placeholder{color:#8A98A6;}
+  .filters input::placeholder{color:#8D97A6;}
   .filters select{
-    font-family:var(--font-body);font-size:12.5px;color:#F0F2F4;
-    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);
-    border-radius:7px;padding:8px 10px;min-width:150px;
+    font-family:var(--font-body);font-size:12.5px;color:var(--ink-text);
+    background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 11px;min-width:150px;
   }
   .filters select option{color:var(--ink-text);background:#ffffff;}
-  .seg{display:flex;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.14);border-radius:8px;overflow:hidden;flex-wrap:wrap;}
+  .filters input:focus,.filters select:focus{outline:2px solid var(--accent-2);outline-offset:-1px;border-color:var(--accent-2);}
+  .seg{display:flex;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap;}
   .seg button{
-    border:none;background:transparent;padding:8px 12px;font-family:var(--font-body);font-size:11.5px;font-weight:700;
-    color:#C6CDD6;cursor:pointer;border-right:1px solid rgba(255,255,255,.1);white-space:nowrap;
+    border:none;background:transparent;padding:9px 12px;font-family:var(--font-body);font-size:11.5px;font-weight:700;
+    color:var(--muted);cursor:pointer;border-right:1px solid var(--line);white-space:nowrap;
   }
+  .seg button:hover{background:var(--paper-2);color:var(--ink-text);}
   .seg button:last-child{border-right:none;}
-  .seg button.active{background:rgba(77,101,142,.45);color:#fff;}
+  .seg button.active{background:var(--accent-2);color:#fff;}
 
   /* ---------- Table card (frente-style) ---------- */
   .table-card{background:var(--paper);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;}
@@ -388,11 +387,14 @@
   .view-tab:hover{background:rgba(255,255,255,.14);color:#fff;}
   .view-tab.active{background:var(--paper);color:var(--ink-text);}
   body.view-glpi .side-tab{display:none;}
-  .sec-h{font-family:var(--font-head);font-weight:700;font-size:22px;color:#F5F4F0;margin:30px 0 14px;display:flex;flex-direction:column;gap:3px;}
-  .sec-h:first-of-type{margin-top:6px;}
-  .sec-h small{font-family:var(--font-mono);font-weight:400;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#9FAAB8;}
+  .sec-h{font-family:var(--font-head);font-weight:700;font-size:20px;color:#F5F4F0;margin:34px 0 18px;text-align:center;text-transform:uppercase;letter-spacing:.14em;}
+  .sec-h:first-of-type{margin-top:12px;}
   .dash-banner{background:#2C3E6F;color:#fff;border-radius:12px;padding:12px 18px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;font-size:12.5px;}
   .g-bar{background:var(--paper);border-radius:14px;padding:16px 22px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;box-shadow:var(--shadow);}
+  .g-bar.sm{padding:10px 16px;margin:16px 0 0;border-radius:12px;}
+  .g-bar.sm .g-bar-l b{font-size:13px;}
+  .g-bar.sm .g-bar-l{font-size:11.5px;}
+  .g-bar.sm .btn{font-size:11.5px;padding:7px 12px;}
   .g-bar-l{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--muted);max-width:640px;}
   .g-bar-l b{font-family:var(--font-head);font-size:15px;color:var(--ink-text);}
   .g-bar-r{display:flex;gap:10px;flex-wrap:wrap;}
@@ -408,10 +410,10 @@
   .g-kpi .l{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;}
   .g-kpi .v{font-family:var(--font-head);font-weight:700;font-size:30px;line-height:1;margin:9px 0 7px;}
   .g-kpi .s{font-size:12px;color:var(--muted);line-height:1.35;}
-  .g-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center;}
+  .g-filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;align-items:center;background:var(--paper);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow);}
   .g-filters input,.g-filters select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-family:var(--font-body);font-size:12.5px;color:var(--ink-text);background:#fff;max-width:190px;}
   .g-filters input[type=search]{flex:1;min-width:200px;max-width:none;}
-  .g-filters label{font-family:var(--font-mono);font-size:10px;color:#9FAAB8;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:6px;}
+  .g-filters label{font-family:var(--font-mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:6px;}
   .stack-track{height:9px;border-radius:5px;background:var(--paper-2);overflow:hidden;display:flex;}
   .g-note{font-size:11.5px;color:var(--muted);margin:10px 0 0;line-height:1.5;}
   .g-empty{color:var(--muted);font-size:12.5px;padding:18px 0;text-align:center;}
@@ -465,7 +467,7 @@
     <div>
       <div class="eyebrow">Vicepresidencia de Negocios</div>
       <h1 class="dash-title">Matriz de Priorización</h1>
-      <div class="dash-sub" id="subDash">Matriz de priorización y tickets GLPI en una sola vista</div>
+      <div class="dash-sub" id="subDash" style="display:none;"></div>
       <div class="dash-sub" id="subMatriz" style="display:none;">Comité quincenal · <b id="headCount">0</b> iniciativas registradas</div>
       <div class="dash-sub" id="subGlpi" style="display:none;">Tiempos, responsables y estado de los tickets · cruzado con la matriz</div>
     </div>
@@ -480,7 +482,7 @@
 
   <div id="viewDash">
     <div class="dash-banner" id="dashBanner" style="display:none;"><span id="dashBannerTxt"></span><button class="btn btn-ghost" id="btnBannerClear" style="color:#fff;border-color:rgba(255,255,255,.35);">✕ Quitar filtros</button></div>
-    <h2 class="sec-h"><small>Panorama</small>Matriz de priorización</h2>
+    <h2 class="sec-h">Matriz de priorización</h2>
   <div class="overview">
     <div class="overview-hero">
       <div class="hero-stat">
@@ -555,7 +557,7 @@
   </div>
 
 
-    <h2 class="sec-h"><small>Panorama</small>Tickets GLPI</h2>
+    <h2 class="sec-h">Tickets GLPI</h2>
     <div class="g-kpis" id="gKpis"></div>
     <div class="overview-grid">
       <div class="ov-card"><h3>Por estado</h3>
@@ -734,16 +736,6 @@
   </div><!-- /viewMatriz -->
 
   <div id="viewGlpi" style="display:none;">
-    <div class="g-bar">
-      <div class="g-bar-l"><b>Cargar tickets desde GLPI</b><span>Descarga el CSV desde GLPI y súbelo aquí. Los tickets nuevos se agregan y los que ya existen se actualizan. El archivo se organiza solo: ID, título, cliente, fechas y horas, y técnicos.</span></div>
-      <div class="g-bar-r">
-        <input type="file" id="gFile" accept=".csv,text/csv,.txt" style="display:none;">
-        <button class="btn btn-accent" id="btnGImport">⬆ Importar CSV de GLPI</button>
-        <button class="btn btn-ghost" id="btnGExport" style="background:#fff;">⬇ Descargar tabla limpia (CSV)</button>
-      </div>
-      <div class="g-msg" id="gMsg"></div>
-    </div>
-
     <div class="g-filters">
       <input type="search" id="gQ" placeholder="Buscar por ID, título, cliente, solicitante, técnico...">
       <select id="gEstado"><option value="todos">Todos los estados</option></select>
@@ -754,12 +746,21 @@
       <select id="gCond"><option value="todos">Cualquier situación</option><option value="abiertos">Abiertos</option><option value="cerrados">Cerrados</option><option value="vencidos">Vencidos</option><option value="porvencer">Vencen en ≤ 2 días</option><option value="sinmov">Sin movimiento ≥ 3 días</option><option value="asig">En asignación</option><option value="atiempo">Cerrados a tiempo</option></select>
       <label>Apertura desde <input type="date" id="gDesde"></label>
       <label>hasta <input type="date" id="gHasta"></label>
-      <button class="btn btn-ghost" id="gClear" style="display:none;color:#fff;border-color:rgba(255,255,255,.3);">✕ Limpiar filtros</button>
+      <button class="btn btn-ghost" id="gClear" style="display:none;">✕ Limpiar filtros</button>
     </div>
 
     <div class="table-card">
       <div class="table-card-head"><div class="ttitle">Detalle de tickets</div><div class="tcount" id="gCount">0 de 0</div></div>
       <div class="gt-wrap"><table class="gt" id="gTable"></table></div>
+    </div>
+    <div class="g-bar sm">
+      <div class="g-bar-l"><b>Cargar tickets desde GLPI</b><span>Sube aquí el CSV que descargas de GLPI.</span></div>
+      <div class="g-bar-r">
+        <input type="file" id="gFile" accept=".csv,text/csv,.txt" style="display:none;">
+        <button class="btn btn-accent" id="btnGImport">⬆ Importar CSV</button>
+        <button class="btn btn-ghost" id="btnGExport" style="background:#fff;">⬇ Descargar tabla limpia</button>
+      </div>
+      <div class="g-msg" id="gMsg"></div>
     </div>
   </div><!-- /viewGlpi -->
 
@@ -2368,6 +2369,7 @@ function setView(v){
   });
   document.body.classList.toggle('view-glpi',v==='glpi');
   document.querySelector('h1.dash-title').textContent=VIEW_TITLE[v];
+  document.querySelector('h1.dash-title').style.display='none';
   try{ history.replaceState(null,'','#'+v); }catch(e){}
   window.scrollTo(0,0);
 }
