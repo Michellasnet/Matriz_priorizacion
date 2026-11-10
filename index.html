@@ -469,7 +469,7 @@
       <h1 class="dash-title">Matriz de Priorización</h1>
       <div class="dash-sub" id="subDash" style="display:none;"></div>
       <div class="dash-sub" id="subMatriz" style="display:none;">Comité quincenal · <b id="headCount">0</b> iniciativas registradas</div>
-      <div class="dash-sub" id="subGlpi" style="display:none;">Tiempos, responsables y estado de los tickets · cruzado con la matriz</div>
+      <div class="dash-sub" id="subGlpi" style="display:none;">Tiempos en días hábiles (sin fines de semana ni festivos de Colombia) · cruzado con la matriz</div>
     </div>
     <div class="save-status"><span class="save-dot" id="saveDot"></span><span id="saveText">Sincronizado</span></div>
   </div>
@@ -569,9 +569,9 @@
     </div>
 
     <div class="overview-grid">
-      <div class="ov-card"><h3>Tiempo abierto</h3><div class="bar-list" id="gBarsAging"></div></div>
+      <div class="ov-card"><h3>Tiempo abierto (días hábiles)</h3><div class="bar-list" id="gBarsAging"></div></div>
       <div class="ov-card"><h3>Por técnico</h3><div class="g-leg"><span><i style="background:#3D6BA8"></i>Abiertos</span><span><i style="background:#2E7D4F"></i>Cerrados</span></div><div class="bar-list" id="gBarsTec"></div></div>
-      <div class="ov-card"><h3>Tiempo de solución</h3><div class="bar-list" id="gBarsTiempo"></div><p class="g-note">Promedio por prioridad, solo tickets cerrados.</p></div>
+      <div class="ov-card"><h3>Tiempo de solución</h3><div class="bar-list" id="gBarsTiempo"></div><p class="g-note">Días hábiles promedio por prioridad, solo tickets cerrados.</p></div>
     </div>
 
     <div class="overview-grid-2">
@@ -1798,11 +1798,47 @@ var PRIO_COLOR = {'Muy alta':'#A8324A','Alta':'#C24A5A','Mediana':'#C1811F','Baj
 var C_OPEN='#3D6BA8', C_DONE='#2E7D4F', C_BAD='#C24A5A', C_WARN='#C1811F', C_GREY='#9AA3B2';
 var DAY_MS = 86400000;
 
+/* ---------- Días hábiles (sin sábados, domingos ni festivos de Colombia) ---------- */
+var HOL_CACHE = {};
+function easterDate(y){
+  var a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+      h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+      mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;
+  return new Date(y,mo-1,da);
+}
+function nextMonday(d){ var x=new Date(d.getFullYear(),d.getMonth(),d.getDate()), wd=x.getDay(); if(wd!==1) x.setDate(x.getDate()+((8-wd)%7)); return x; }
+function dkey(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
+function festivosCO(y){
+  if(HOL_CACHE[y]) return HOL_CACHE[y];
+  var set={}, add=function(d){ set[dkey(d)]=1; };
+  [[0,1],[4,1],[6,20],[7,7],[11,8],[11,25]].forEach(function(f){ add(new Date(y,f[0],f[1])); });
+  [[0,6],[2,19],[5,29],[7,15],[9,12],[10,1],[10,11]].forEach(function(f){ add(nextMonday(new Date(y,f[0],f[1]))); });
+  var e=easterDate(y);
+  add(new Date(y,e.getMonth(),e.getDate()-3)); add(new Date(y,e.getMonth(),e.getDate()-2));
+  [39,60,68].forEach(function(n){ add(nextMonday(new Date(y,e.getMonth(),e.getDate()+n))); });
+  HOL_CACHE[y]=set; return set;
+}
+function esHabil(d){ var wd=d.getDay(); return wd!==0 && wd!==6 && !festivosCO(d.getFullYear())[dkey(d)]; }
+function bizDays(a,b){
+  if(!a||!b||b<=a) return 0;
+  var total=0, cur=new Date(a.getFullYear(),a.getMonth(),a.getDate()), guard=0;
+  while(cur<b && guard++<4000){
+    var nxt=new Date(cur.getFullYear(),cur.getMonth(),cur.getDate()+1);
+    if(esHabil(cur)){ var s0=a>cur?a:cur, e0=b<nxt?b:nxt; if(e0>s0) total+=(e0-s0)/DAY_MS; }
+    cur=nxt;
+  }
+  return total;
+}
+
+
 function pad2(n){ n=String(n); return n.length<2?'0'+n:n; }
+var gParseWarn = [];
 function parseGlpiDate(s){
-  if(!s) return null;
+  if(!s || !String(s).trim()) return null;
+  var iso=String(s).trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::\d{2})?)?$/);
+  if(iso) return iso[1]+'-'+pad2(iso[2])+'-'+pad2(iso[3])+'T'+pad2(iso[4]||0)+':'+pad2(iso[5]||0)+':00';
   var m=String(s).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
-  if(!m) return null;
+  if(!m){ gParseWarn.push(String(s).trim()); return null; }
   return m[3]+'-'+pad2(m[2])+'-'+pad2(m[1])+'T'+pad2(m[4]||0)+':'+pad2(m[5]||0)+':00';
 }
 function tsToDate(s){
@@ -1925,7 +1961,9 @@ function importarCSV(file){
     var first=text.split(/\r?\n/)[0]||'';
     var delim=(first.split(';').length>=first.split(',').length)?';':',';
     var rows=parseCSV(text,delim).filter(function(r){ return r.some(function(c){ return String(c).trim()!==''; }); });
+    gParseWarn=[];
     var tickets=rowsToTickets(rows);
+    if(gParseWarn.length){ gMsg('No reconocí el formato de fecha en '+gParseWarn.length+' campos (por ejemplo "'+gParseWarn[0]+'"). No se guardó nada para no borrar fechas.','err'); return; }
     if(tickets===null){ gMsg('No reconozco este archivo: debe tener las columnas "ID" y "Título" del export de GLPI.','err'); return; }
     if(!tickets.length){ gMsg('El archivo no trae tickets con ID numérico.','err'); return; }
     var nuevos=0, actualizados=0;
@@ -1959,10 +1997,10 @@ function gCierre(t){ return t.fs || (gCerrado(t) ? t.ua : null); }
 function gDias(t,now){ // duración: apertura -> cierre (cerrado) o -> hoy (abierto)
   if(!t.ap) return null;
   var fin = gCerrado(t) ? gCierre(t) : now;
-  return fin ? Math.max(0,(fin-t.ap)/DAY_MS) : null;
+  return fin ? bizDays(t.ap,fin) : null;
 }
 function gVencido(t,now){ return !gCerrado(t) && t.ts && t.ts<now; }
-function gSinMov(t,now){ return (!gCerrado(t) && t.ua) ? (now-t.ua)/DAY_MS : null; }
+function gSinMov(t,now){ return (!gCerrado(t) && t.ua) ? bizDays(t.ua,now) : null; }
 function gEnAsignacion(t){ return !gCerrado(t) && /asignaci/i.test(t.proyecto); }
 function estadoColor(e){
   if(/resuel|cerrad|solucionad/i.test(e)) return C_DONE;
@@ -1979,7 +2017,7 @@ function gCondOk(t,cond,now){
   if(cond==='abiertos') return !cer;
   if(cond==='cerrados') return cer;
   if(cond==='vencidos') return !!gVencido(t,now);
-  if(cond==='porvencer') return !cer && !!t.ts && t.ts>=now && (t.ts-now)/DAY_MS<=2;
+  if(cond==='porvencer') return !cer && !!t.ts && t.ts>=now && bizDays(now,t.ts)<=2;
   if(cond==='sinmov'){ var sm=gSinMov(t,now); return sm!==null && sm>=3; }
   if(cond==='asig') return gEnAsignacion(t);
   if(cond==='atiempo') return cer && !!t.ts && !!gCierre(t) && gCierre(t)<=t.ts;
@@ -2078,11 +2116,11 @@ function gRender(){
     kpi('total','Tickets',tot,gAnyFilter(false)?('de '+all.length+' cargados'):'registrados en GLPI','#20242F','Todos los tickets',lst(rows),'todos','Sin tickets')+
     kpi('abiertos','Abiertos',abiertos.length,tot?Math.round(abiertos.length/tot*100)+'% del total':'—',C_OPEN,'Tickets abiertos',lst(byDur(abiertos),function(t){return 'abierto '+fmtDur(gDias(t,now));}),'abiertos','No hay tickets abiertos')+
     kpi('cerrados','Cerrados',cerrados.length,tot?Math.round(cerrados.length/tot*100)+'% del total':'—',C_DONE,'Tickets cerrados',lst(cerrados,function(t){return 'cerrado '+fmtFecha(gCierre(t));}),'cerrados','Aún no hay tickets cerrados')+
-    kpi('vencidos','Vencidos',venc.length,'pasaron su fecha límite',C_BAD,'Vencidos',lst(venc.slice().sort(function(a,b){return a.ts-b.ts;}),function(t){return 'vencido hace '+fmtDur((now-t.ts)/DAY_MS);}),'vencidos','Ningún ticket vencido')+
-    kpi('porvencer','Por vencer',porVencer.length,'vencen en 2 días o menos',C_WARN,'Por vencer',lst(porVencer,function(t){return 'vence en '+fmtDur((t.ts-now)/DAY_MS);}),'porvencer','Ninguno vence pronto')+
-    kpi('tiempo','Tiempo de solución',fmtDurL(avg(durCerr)),durCerr.length?'en promedio por ticket cerrado':'aún no hay cerrados','#2C9AA0','Tiempo que tomó cada ticket',lst(byDur(cerrados),function(t){return fmtDur(gDias(t,now));}),'cerrados','Aún no hay tickets cerrados')+
-    kpi('antig','Días abiertos',fmtDurL(avg(durAb)),'en promedio por ticket abierto','#7A5BA6','Tiempo abierto de cada ticket',lst(byDur(abiertos),function(t){return fmtDur(gDias(t,now));}),'abiertos','No hay tickets abiertos')+
-    kpi('sinmov','Sin cambios',sinMov.length,'sin actualizar hace 3 días o más','#B0572B','Sin cambios hace 3 días o más',lst(sinMov.slice().sort(function(a,b){return gSinMov(b,now)-gSinMov(a,now);}),function(t){return fmtDur(gSinMov(t,now))+' sin cambios';}),'sinmov','Ningún ticket estancado')+
+    kpi('vencidos','Vencidos',venc.length,'pasaron su fecha límite',C_BAD,'Vencidos',lst(venc.slice().sort(function(a,b){return a.ts-b.ts;}),function(t){return 'vencido hace '+fmtDur(bizDays(t.ts,now));}),'vencidos','Ningún ticket vencido')+
+    kpi('porvencer','Por vencer',porVencer.length,'vencen en 2 días hábiles o menos',C_WARN,'Por vencer',lst(porVencer,function(t){return 'vence en '+fmtDur(bizDays(now,t.ts));}),'porvencer','Ninguno vence pronto')+
+    kpi('tiempo','Tiempo de solución',fmtDurL(avg(durCerr)),durCerr.length?'días hábiles, en promedio por ticket cerrado':'aún no hay cerrados','#2C9AA0','Días hábiles de cada ticket',lst(byDur(cerrados),function(t){return fmtDur(gDias(t,now));}),'cerrados','Aún no hay tickets cerrados')+
+    kpi('antig','Días abiertos',fmtDurL(avg(durAb)),'días hábiles, en promedio por ticket abierto','#7A5BA6','Días hábiles abierto',lst(byDur(abiertos),function(t){return fmtDur(gDias(t,now));}),'abiertos','No hay tickets abiertos')+
+    kpi('sinmov','Sin cambios',sinMov.length,'sin actualizar hace 3 días hábiles o más','#B0572B','Sin cambios hace 3 días hábiles o más',lst(sinMov.slice().sort(function(a,b){return gSinMov(b,now)-gSinMov(a,now);}),function(t){return fmtDur(gSinMov(t,now))+' sin cambios';}),'sinmov','Ningún ticket estancado')+
     kpi('asig','Por asignar',asig.length,'esperando equipo responsable',C_GREY,'Esperando asignación',lst(asig),'asig','Nada pendiente de asignar')+
     kpi('atiempo','A tiempo',conPlazo.length?Math.round(aTiempo/conPlazo.length*100)+'%':'—',conPlazo.length?aTiempo+' de '+conPlazo.length+' cerrados antes de su fecha':'aún no hay cerrados','#6FAE2E','Cerrados antes de su fecha límite',lst(okTiempo),'atiempo','Aún no hay datos');
   gKpiData=KD;
@@ -2099,7 +2137,7 @@ function gRender(){
 
   /* Plazos */
   var pzA={venc:[],pronto:[],plazo:[],sinf:[]};
-  abiertos.forEach(function(t){ if(!t.ts) pzA.sinf.push(t); else if(t.ts<now) pzA.venc.push(t); else if((t.ts-now)/DAY_MS<=2) pzA.pronto.push(t); else pzA.plazo.push(t); });
+  abiertos.forEach(function(t){ if(!t.ts) pzA.sinf.push(t); else if(t.ts<now) pzA.venc.push(t); else if(bizDays(now,t.ts)<=2) pzA.pronto.push(t); else pzA.plazo.push(t); });
   var pv=pzA.venc.length,pr=pzA.pronto.length,pe=pzA.plazo.length,ps=pzA.sinf.length;
   gPz=pzA; gRowsNow=rows;
   gDonut('gDonutPlazo','gLegendPlazo',[
@@ -2187,7 +2225,7 @@ function gRender(){
   var att=[];
   abiertos.forEach(function(t){
     var chips=[], score=0;
-    if(gVencido(t,now)){ var dd=(now-t.ts)/DAY_MS; chips.push('<span class="chip red">Vencido hace '+fmtDur(dd)+'</span>'); score+=100+dd; }
+    if(gVencido(t,now)){ var dd=bizDays(t.ts,now); chips.push('<span class="chip red">Vencido hace '+fmtDur(dd)+'</span>'); score+=100+dd; }
     var sm=gSinMov(t,now); if(sm!==null && sm>=3){ chips.push('<span class="chip amber">Sin movimiento '+fmtDur(sm)+'</span>'); score+=20+sm; }
     if(gEnAsignacion(t)){ chips.push('<span class="chip blue">En asignación</span>'); score+=10; }
     if(!t.asignados.length){ chips.push('<span class="chip grey">Sin técnico</span>'); score+=5; }
@@ -2228,7 +2266,7 @@ function gRenderCross(){
       (g?'<td><span class="chip" style="background:'+estadoColor(g.estado)+'22;color:'+estadoColor(g.estado)+'">'+escapeHtml(g.estado)+'</span></td><td>'+escapeHtml(g.prioridad)+'</td><td class="mono">'+fmtDur(gDias(g,now))+(gCerrado(g)?' (cierre)':'')+'</td><td>'+escapeHtml(g.asignados.join(', '))+'</td>'
          :'<td colspan="4" style="color:var(--muted);font-style:italic;">Ticket no encontrado en GLPI</td>')+'</tr>';
   }).join('');
-  tb.innerHTML='<thead><tr>'+['Iniciativa (matriz)','Ticket','Puntaje','Decisión sugerida','Decisión del comité','Estado GLPI','Prioridad GLPI','Tiempo abierto','Técnicos'].map(function(h){return '<th style="cursor:default">'+h+'</th>';}).join('')+'</tr></thead><tbody>'+rowsH+'</tbody>';
+  tb.innerHTML='<thead><tr>'+['Iniciativa (matriz)','Ticket','Puntaje','Decisión sugerida','Decisión del comité','Estado GLPI','Prioridad GLPI','Días hábiles abierto','Técnicos'].map(function(h){return '<th style="cursor:default">'+h+'</th>';}).join('')+'</tr></thead><tbody>'+rowsH+'</tbody>';
 }
 
 /* ---------- Tabla de detalle ---------- */
@@ -2257,7 +2295,7 @@ function gRenderTable(rows,now){
   var tb=document.getElementById('gTable');
   var sorted=rows.slice().sort(function(a,b){ var x=gSortVal(a,gSort.key), y=gSortVal(b,gSort.key); if(x===y) return 0; if(x===''||x===null) return 1; if(y===''||y===null) return -1; return (x<y?-1:1)*(gSort.dir==='asc'?1:-1); });
   if(!glpi.length){ tb.innerHTML='<tbody><tr><td style="text-align:center;padding:40px;background:transparent;border:none;color:var(--muted);"><div class="big" style="font-family:var(--font-head);font-weight:700;color:var(--ink-text);font-size:15px;margin-bottom:6px;">Aún no hay tickets cargados</div>Descarga el CSV desde GLPI y usa el botón "Importar CSV de GLPI".</td></tr></tbody>'; return; }
-  var head='<thead><tr>'+GCOLS.map(function(c){ var arrow=(gSort.key===c[1])?(gSort.dir==='asc'?' ▲':' ▼'):''; return '<th data-sort="'+c[1]+'">'+c[0]+arrow+'</th>'; }).join('')+'<th data-sort="dias">Tiempo abierto / solución</th><th style="cursor:default">Iniciativa en matriz</th></tr></thead>';
+  var head='<thead><tr>'+GCOLS.map(function(c){ var arrow=(gSort.key===c[1])?(gSort.dir==='asc'?' ▲':' ▼'):''; return '<th data-sort="'+c[1]+'">'+c[0]+arrow+'</th>'; }).join('')+'<th data-sort="dias">Días hábiles abierto / solución</th><th style="cursor:default">Iniciativa en matriz</th></tr></thead>';
   var body=sorted.map(function(t){
     var cells=GCOLS.map(function(c){
       var v=c[2](t);
